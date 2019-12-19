@@ -13,12 +13,11 @@ Installation script targeted for a developper laptop.
 1. Boot on Arch linux installation media
 2. Setup internet connexion
 3. Install git
-4. 
+
 
 ```` sh
 git clone https://github.com/mathieubrun/arch-linux-install
 export DMCRYPT_PASSWORD=your_password
-export VBOX=0
 ./install.sh
 ````
 
@@ -29,7 +28,7 @@ export VBOX=0
 ## Testing with packer
 
 ```` sh
-packer build -force arch_template.json
+packer build --only=qemu arch_template.json
 ````
 
 

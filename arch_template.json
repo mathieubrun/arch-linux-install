@@ -1,50 +1,48 @@
 {
-  "variables": {
-    "iso_url": "https://mirrors.kernel.org/archlinux/iso/2019.12.01/archlinux-2019.12.01-x86_64.iso",
-    "iso_checksum_url": "https://mirrors.kernel.org/archlinux/iso/2019.12.01/sha1sums.txt",
-    "iso_checksum_type": "sha1"
-  },
-  "builders": [
-    {
-      "type": "virtualbox-iso",
-      "iso_url": "{{ user `iso_url` }}",
-      "iso_checksum_url": "{{ user `iso_checksum_url` }}",
-      "iso_checksum_type": "{{ user `iso_checksum_type` }}",
-      "guest_os_type": "ArchLinux_64",
-      "guest_additions_mode": "disable",
-      "vm_name": "arch_base",
-      "http_directory": "scripts",
-      "boot_wait": "5s",
-      "boot_command": [
-        "<enter><wait10><wait10><wait10><wait10><wait10>",
-        "mkdir -p /root/.ssh<enter><wait2>",
-        "echo {{ .SSHPublicKey }} > /root/.ssh/authorized_keys<enter><wait2>",
-        "systemctl start sshd.service<enter>"
-      ],
-      "vboxmanage": [
-        ["modifyvm", "{{.Name}}", "--rtcuseutc", "on"],
-        ["modifyvm", "{{.Name}}", "--firmware", "efi"],
-        ["modifyvm", "{{.Name}}", "--vrde", "off"],
-        ["modifyvm", "{{.Name}}", "--vram", "64"]
-      ],
-      "hard_drive_interface": "sata",
-      "iso_interface": "sata",
-      "ssh_username": "root",
-      "shutdown_command": "sudo poweroff"
-    }
-  ],
-  "provisioners": [
-    {
-      "type": "shell",
-      "environment_vars": [
-        "VBOX=1",
-        "DMCRYPT_PASSWORD=changeme"
-      ],
-      "execute_command": "{{ .Vars }} sudo -E -S bash '{{ .Path }}'",
-      "expect_disconnect": true,
-      "scripts": [
-        "install.sh"
-      ]
-    }
-  ]
+    "variables": {
+        "iso_url": "https://mirrors.kernel.org/archlinux/iso/{{isotime \"2006.01\"}}.01/archlinux-{{isotime \"2006.01\"}}.01-x86_64.iso",
+        "iso_checksum_url": "https://mirrors.kernel.org/archlinux/iso/{{isotime \"2006.01\"}}.01/sha1sums.txt",
+        "iso_checksum_type": "sha1"
+    },
+    "builders": [
+        {
+            "type": "qemu",
+            "iso_url": "{{ user `iso_url` }}",
+            "iso_checksum_url": "{{ user `iso_checksum_url` }}",
+            "iso_checksum_type": "{{ user `iso_checksum_type` }}",
+            "vm_name": "arch_base",
+            "http_directory": "scripts",
+            "boot_wait": "5s",
+            "boot_command": [
+                "<enter><wait10><wait10><wait10>",
+                "curl http://{{ .HTTPIP }}:{{ .HTTPPort }}/ssh.sh | bash<enter><wait5>"
+            ],
+            "ssh_username": "root",
+            "ssh_password": "root",
+            "shutdown_command": "sudo poweroff",
+            "headless": "true",
+            "disk_additional_size": [
+                "16G", "16G"
+            ],
+            "qemuargs": [                                                             
+                ["-drive", "file=output-qemu/arch_base-1,if=none,id=D22"],              
+                ["-device", "nvme,drive=D22,serial=1234"],
+                ["-drive", "file=output-qemu/arch_base-2,if=none,id=D23"],              
+                ["-device", "nvme,drive=D23,serial=5678"]  
+            ]  
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "environment_vars": [
+                "DMCRYPT_PASSWORD=changeme"
+            ],
+            "execute_command": "{{ .Vars }} sudo -E -S bash '{{ .Path }}'",
+            "expect_disconnect": true,
+            "scripts": [
+                "install.sh"
+            ]
+        }
+    ]
 }

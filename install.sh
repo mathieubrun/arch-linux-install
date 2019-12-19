@@ -25,46 +25,24 @@ export ADD_KEYMAP="fr_CH-latin1"
 export ADD_TIMEZONE="Europe/Zurich"
 export FIRST_USER="mathieu"
 
-if [ "$VBOX" = "1" ]; then
+echo "==== partition $DEV_DRIVE1"
+sgdisk --clear $DEV_DRIVE1
+sgdisk --zap-all $DEV_DRIVE1
+sgdisk --clear \
+    --new=1:0:+576MiB  --typecode=1:ef00 --change-name=1:$PART_NAME_EFI  \
+    --new=2:0:+7616MiB --typecode=2:8300 --change-name=2:"empty" \
+    --new=3:0:0        --typecode=3:8300 --change-name=3:$PART_NAME_DRIVE1 \
+    $DEV_DRIVE1
+sgdisk --print $DEV_DRIVE1
 
-    DEV_DRIVE1="/dev/sda"
-
-    PART_EFI="/dev/sda1"
-    PART_DRIVE1="/dev/sda3"
-
-    PART_SWAP="/dev/sda2"
-    PART_DRIVE2="/dev/sda4"
-
-    echo "==== partition $DEV_DRIVE1"
-    sgdisk --clear \
-        --new=1:0:+550MiB  --typecode=1:ef00 --change-name=1:$PART_NAME_EFI \
-        --new=2:0:+512MiB  --typecode=2:8200 --change-name=2:$PART_NAME_SWAP \
-        --new=3:0:+8192MiB --typecode=3:8300 --change-name=3:$PART_NAME_DRIVE1 \
-        --new=4:0:+8192MiB --typecode=4:8300 --change-name=4:$PART_NAME_DRIVE2 \
-        $DEV_DRIVE1
-    sgdisk --print $DEV_DRIVE1
-
-else
-    
-    echo "==== partition $DEV_DRIVE1"
-    sgdisk --clear $DEV_DRIVE1
-    sgdisk --zap-all $DEV_DRIVE1
-    sgdisk --clear \
-        --new=1:0:+576MiB  --typecode=1:ef00 --change-name=1:$PART_NAME_EFI  \
-        --new=2:0:+7616MiB --typecode=2:8300 --change-name=2:"empty" \
-        --new=3:0:0        --typecode=3:8300 --change-name=3:$PART_NAME_DRIVE1 \
-        $DEV_DRIVE1
-    sgdisk --print $DEV_DRIVE1
-
-    echo "==== partition $DEV_DRIVE2"
-    sgdisk --clear $DEV_DRIVE2
-    sgdisk --zap-all $DEV_DRIVE2
-    sgdisk --clear \
-        --new=1:0:+8192MiB --typecode=1:8200 --change-name=1:$PART_NAME_SWAP  \
-        --new=2:0:0        --typecode=2:8300 --change-name=2:$PART_NAME_DRIVE2 \
-        $DEV_DRIVE2
-    sgdisk --print $DEV_DRIVE2
-fi
+echo "==== partition $DEV_DRIVE2"
+sgdisk --clear $DEV_DRIVE2
+sgdisk --zap-all $DEV_DRIVE2
+sgdisk --clear \
+    --new=1:0:+8192MiB --typecode=1:8200 --change-name=1:$PART_NAME_SWAP  \
+    --new=2:0:0        --typecode=2:8300 --change-name=2:$PART_NAME_DRIVE2 \
+    $DEV_DRIVE2
+sgdisk --print $DEV_DRIVE2
 
 echo "==== crypt partitions"
 wipefs --all --force $PART_SWAP
@@ -284,10 +262,27 @@ pacstrap /mnt \
     openssh \
     packer \
     qpdfview \
+    qemu qemu-arch-extra libvirt virt-manager \
     sensors-applet \
     rawtherapee \
     syncthing \
     vagrant \
     vim \
-    virtualbox virtualbox-host-modules-arch \
     vlc
+
+echo "==== create install-chroot script"
+cat << SCRIPT_DELIMITER > /mnt/usr/local/bin/install-chroot.sh
+#!/bin/bash
+set -eux
+
+echo "====> final services"
+systemctl enable libvirtd
+
+usermod -aG libvirt $FIRST_USER
+
+SCRIPT_DELIMITER
+
+chmod u+x /mnt/usr/local/bin/install-chroot.sh
+
+echo "==== run install-chroot in chroot"
+arch-chroot /mnt /usr/local/bin/install-chroot.sh
