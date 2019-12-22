@@ -20,11 +20,11 @@
             "ssh_username": "root",
             "ssh_password": "root",
             "shutdown_command": "sudo poweroff",
-            "headless": "true",
             "disk_additional_size": [
-                "16G", "16G"
+                "32G", "32G"
             ],
-            "qemuargs": [                                                             
+            "qemuargs": [                                  
+                ["-bios", "efi.bin"],                           
                 ["-drive", "file=output-qemu/arch_base-1,if=none,id=D22"],              
                 ["-device", "nvme,drive=D22,serial=1234"],
                 ["-drive", "file=output-qemu/arch_base-2,if=none,id=D23"],              

@@ -28,6 +28,7 @@ export DMCRYPT_PASSWORD=your_password
 ## Testing with packer
 
 ```` sh
+cp /usr/share/ovmf/x64/OVMF_CODE.fd efi.bin
 packer build --only=qemu arch_template.json
 ````
 
