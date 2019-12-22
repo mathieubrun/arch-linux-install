@@ -5,11 +5,10 @@ export DEV_DRIVE1="/dev/nvme0n1"
 export DEV_DRIVE2="/dev/nvme1n1"
 
 export PART_EFI="/dev/nvme0n1p1"
-export PART_EMPTY="/dev/nvme0n1p2"
+export PART_SWAP="/dev/nvme0n1p2"
 export PART_DRIVE1="/dev/nvme0n1p3"
 
-export PART_SWAP="/dev/nvme1n1p1"
-export PART_DRIVE2="/dev/nvme1n1p2"
+export PART_DRIVE2="/dev/nvme1n1p3"
 
 export PART_NAME_EFI="efi"
 export PART_NAME_SWAP="swap"
@@ -29,8 +28,8 @@ echo "==== partition $DEV_DRIVE1"
 sgdisk --clear $DEV_DRIVE1
 sgdisk --zap-all $DEV_DRIVE1
 sgdisk --clear \
-    --new=1:0:+576MiB  --typecode=1:ef00 --change-name=1:$PART_NAME_EFI  \
-    --new=2:0:+7616MiB --typecode=2:8300 --change-name=2:"empty" \
+    --new=1:0:+768MiB  --typecode=1:ef00 --change-name=1:$PART_NAME_EFI  \
+    --new=2:0:+8192MiB --typecode=2:8300 --change-name=2:$PART_NAME_SWAP \
     --new=3:0:0        --typecode=3:8300 --change-name=3:$PART_NAME_DRIVE1 \
     $DEV_DRIVE1
 sgdisk --print $DEV_DRIVE1
@@ -39,8 +38,9 @@ echo "==== partition $DEV_DRIVE2"
 sgdisk --clear $DEV_DRIVE2
 sgdisk --zap-all $DEV_DRIVE2
 sgdisk --clear \
-    --new=1:0:+8192MiB --typecode=1:8200 --change-name=1:$PART_NAME_SWAP  \
-    --new=2:0:0        --typecode=2:8300 --change-name=2:$PART_NAME_DRIVE2 \
+    --new=1:0:+768MiB  --typecode=1:ef00 --change-name=1:$PART_NAME_EFI  \
+    --new=2:0:+8192MiB --typecode=2:8300 --change-name=2:$PART_NAME_SWAP \
+    --new=3:0:0        --typecode=3:8300 --change-name=3:$PART_NAME_DRIVE2 \
     $DEV_DRIVE2
 sgdisk --print $DEV_DRIVE2
 
