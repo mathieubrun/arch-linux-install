@@ -87,23 +87,20 @@ PART_UUID_DRIVE2=$(blkid -s UUID -o value $PART_DRIVE2)
 
 echo "==== install base packages"
 timedatectl set-ntp true
+pacman -Sy --noconfirm archlinux-keyring
 
 pacstrap /mnt \
     base \
     base-devel \
     btrfs-progs \
-    docker kubectl \
     git \
     go \
     intel-ucode \
     linux linux-firmware linux-headers \
     networkmanager wpa_supplicant \
-    nvidia nvidia-utils \
-    powertop smartmontools tlp tlp-rdw \
     systemd \
     terminus-font \
-    zsh zsh-completions zsh-autosuggestions  
-
+    zsh 
 
 echo "==== setup vconsole"
 cat << SCRIPT_DELIMITER > /mnt/etc/vconsole.conf
@@ -166,6 +163,15 @@ visudo -c
 
 echo '$FIRST_USER:$FIRST_USER' | chpasswd
 
+echo "==== install yay"
+sed -i 's/#Color/Color/' /etc/pacman.conf
+su - $FIRST_USER -c "git clone https://aur.archlinux.org/yay.git \
+&& cd yay \
+&& makepkg -si --noconfirm"
+
+pacman -Sy --noconfirm \
+    nvidia nvidia-utils 
+    
 echo "==== setup nvidia power management"
 cat << INNER_DELIMITER > /lib/udev/rules.d/80-nvidia-pm.rules
 # Remove NVIDIA USB xHCI Host Controller devices, if present
@@ -190,7 +196,10 @@ cat << INNER_DELIMITER > /etc/modprobe.d/nvidia.conf
 options nvidia "NVreg_DynamicPowerManagement=0x02"
 INNER_DELIMITER
 
-echo "==== setup powertop service"
+echo "==== setup powertop"
+pacman -Sy --noconfirm \
+    powertop
+
 cat << INNER_DELIMITER > /etc/systemd/system/powertop.service
 [Unit]
 Description=Powertop tunings
@@ -206,6 +215,9 @@ INNER_DELIMITER
 systemctl enable powertop.service
 
 echo "==== setup tlp"
+pacman -Sy --noconfirm \
+    smartmontools tlp tlp-rdw 
+
 sed -i 's/TLP_DEFAULT_MODE.*/TLP_DEFAULT_MODE=BAT/' /etc/default/tlp 
 sed -i 's/SATA_LINKPWR_ON_BAT.*/SATA_LINKPWR_ON_BAT=max_performance/' /etc/default/tlp 
 sed -i 's/#PCIE_ASPM_ON_BAT.*/PCIE_ASPM_ON_BAT=powersave/' /etc/default/tlp 
@@ -213,36 +225,31 @@ sed -i 's/#PCIE_ASPM_ON_AC.*/PCIE_ASPM_ON_AC=default/' /etc/default/tlp
 systemctl enable tlp.service
 systemctl enable tlp-sleep.service
 
-echo "==== install yay"
-sed -i 's/#Color/Color/' /etc/pacman.conf
-su - $FIRST_USER -c "git clone https://aur.archlinux.org/yay.git \
-&& cd yay \
-&& makepkg -si --noconfirm"
+echo "==== setup optimus-manager"
+# su - $FIRST_USER -c "yay -Sy --noconfirm optimus-manager gdm-prime"
+# systemctl enable optimus-manager.service
+# systemctl enable gdm.service
 
-echo "==== install optimus-manager"
-su - $FIRST_USER -c "yay -Sy --noconfirm optimus-manager gdm-prime"
-systemctl enable optimus-manager.service
-systemctl enable gdm.service
-
+echo "==== setup docker"
+pacman -Sy --noconfirm \
+    docker
 usermod -aG docker $FIRST_USER
 systemctl enable docker.service
 
-echo "==== firefox touch gestures"
-echo "MOZ_USE_XINPUT2 DEFAULT=1" >> /etc/security/pam_env.conf
+echo "==== setup qemu"
+pacman -Sy --noconfirm \
+    qemu qemu-arch-extra libvirt virt-manager
 
-SCRIPT_DELIMITER
+usermod -aG libvirt $FIRST_USER
+systemctl enable libvirtd
 
-chmod u+x /mnt/usr/local/bin/install-chroot.sh
-
-echo "==== run install-chroot in chroot"
-arch-chroot /mnt /usr/local/bin/install-chroot.sh
-
-echo "====> last packages"
-pacstrap /mnt \
+echo "==== misc packages"
+pacman -Sy --noconfirm \
     arduino \
     bluez bluez-utils pulseaudio-alsa pulseaudio-bluetooth \
     chrome-gnome-shell \
     code \
+    kubectl \
     firefox \
     gnome-backgrounds \
     gnome-control-center \
@@ -262,23 +269,16 @@ pacstrap /mnt \
     openssh \
     packer \
     qpdfview \
-    qemu qemu-arch-extra libvirt virt-manager \
     sensors-applet \
     rawtherapee \
     syncthing \
     vagrant \
     vim \
-    vlc
+    vlc \
+    zsh-completions zsh-autosuggestions
 
-echo "==== create install-chroot script"
-cat << SCRIPT_DELIMITER > /mnt/usr/local/bin/install-chroot.sh
-#!/bin/bash
-set -eux
-
-echo "====> final services"
-systemctl enable libvirtd
-
-usermod -aG libvirt $FIRST_USER
+echo "==== firefox touch gestures"
+echo "MOZ_USE_XINPUT2 DEFAULT=1" >> /etc/security/pam_env.conf
 
 SCRIPT_DELIMITER
 
