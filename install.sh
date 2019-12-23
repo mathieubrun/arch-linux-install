@@ -226,9 +226,9 @@ systemctl enable tlp.service
 systemctl enable tlp-sleep.service
 
 echo "==== setup optimus-manager"
-# su - $FIRST_USER -c "yay -Sy --noconfirm optimus-manager gdm-prime"
-# systemctl enable optimus-manager.service
-# systemctl enable gdm.service
+su - $FIRST_USER -c "yay -Sy --noconfirm optimus-manager gdm-prime"
+systemctl enable optimus-manager.service
+systemctl enable gdm.service
 
 echo "==== setup docker"
 pacman -Sy --noconfirm \
@@ -238,10 +238,11 @@ systemctl enable docker.service
 
 echo "==== setup qemu"
 pacman -Sy --noconfirm \
-    qemu qemu-arch-extra libvirt virt-manager
+    qemu qemu-arch-extra libvirt virt-manager ebtables dnsmasq
 
 usermod -aG libvirt $FIRST_USER
 systemctl enable libvirtd
+systemctl enable ebtables
 
 echo "==== misc packages"
 pacman -Sy --noconfirm \
