@@ -41,7 +41,9 @@
             "execute_command": "{{ .Vars }} sudo -E -S bash '{{ .Path }}'",
             "expect_disconnect": true,
             "scripts": [
-                "install.sh"
+                "install.sh",
+                "unmount.sh",
+                "clean_parts.sh"
             ]
         }
     ]
