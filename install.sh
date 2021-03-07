@@ -218,12 +218,11 @@ echo "==== setup tlp"
 pacman -Sy --noconfirm \
     smartmontools tlp tlp-rdw 
 
-sed -i 's/TLP_DEFAULT_MODE.*/TLP_DEFAULT_MODE=BAT/' /etc/default/tlp 
-sed -i 's/SATA_LINKPWR_ON_BAT.*/SATA_LINKPWR_ON_BAT=max_performance/' /etc/default/tlp 
-sed -i 's/#PCIE_ASPM_ON_BAT.*/PCIE_ASPM_ON_BAT=powersave/' /etc/default/tlp 
-sed -i 's/#PCIE_ASPM_ON_AC.*/PCIE_ASPM_ON_AC=default/' /etc/default/tlp 
+sed -i 's/TLP_DEFAULT_MODE.*/TLP_DEFAULT_MODE=BAT/' /etc/tlp.conf
+sed -i 's/SATA_LINKPWR_ON_BAT.*/SATA_LINKPWR_ON_BAT=max_performance/' /etc/tlp.conf
+sed -i 's/#PCIE_ASPM_ON_BAT.*/PCIE_ASPM_ON_BAT=powersave/' /etc/tlp.conf
+sed -i 's/#PCIE_ASPM_ON_AC.*/PCIE_ASPM_ON_AC=default/' /etc/tlp.conf
 systemctl enable tlp.service
-systemctl enable tlp-sleep.service
 
 echo "==== setup optimus-manager"
 su - $FIRST_USER -c "yay -Sy --noconfirm optimus-manager gdm-prime"
